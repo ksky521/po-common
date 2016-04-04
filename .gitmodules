@@ -1,3 +1,6 @@
 [submodule "plugin"]
 	path = plugin
 	url = git@github.com:ksky521/fis-plus-smarty-plugin.git
+[submodule "static/po"]
+	path = static/po
+	url = git@github.com:ksky521/po.js.git
