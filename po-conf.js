@@ -1,7 +1,7 @@
 po
   .set('namespace', 'common')
   .set('template', 'template')
-  .set('static', 'static/common')
+  .set('static', '/static/common')
   .match('plugin', {
     release: 'plugin'
   })
