@@ -18,4 +18,12 @@ po
   .match('/static/(*)/(**)', {
     id: '$1/$2',
     release: '${static}/$1/$2'
-  })
+  });
+
+// var config = require('../config.json');
+po.match('/plugin/FISResource.class.php', {
+  preprocessor: function(content, file, conf){
+    content = content.replace('<!--[COMBO_SEVER_URL]-->', '//127.0.0.1:8080/static');
+    return content;
+  }
+});
