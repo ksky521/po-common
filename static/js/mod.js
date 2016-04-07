@@ -12,6 +12,9 @@ var define;
 
 (function(global) {
 
+    var ls = window.localStorage;
+    var isLsCache = !!ls;
+
     // 避免重复加载而导致已定义模块丢失
     if (require) {
         return;
@@ -83,7 +86,7 @@ var define;
         });
     };
 
-    define = function(id, factory) {
+    define = function(id, factory, hash) {
         id = id.replace(/\.js$/i, '');
         factoryMap[id] = factory;
 
@@ -93,6 +96,17 @@ var define;
                 queue[i]();
             }
             delete loadingMap[id];
+        }
+        //存入localstorage
+        if (isLsCache && hash && hash.length > 5) {
+            try {
+                ls[id] = JSON.stringify({
+                    code: factory.toString(),
+                    v: hash
+                });
+            } catch (e) {
+                isLsCache = false;
+            }
         }
     };
 
@@ -173,7 +187,34 @@ var define;
 
                 needMap[dep] = true;
                 needNum++;
-                loadScript(dep, updateNeed, onerror);
+                var isNeedLoad = true;
+
+                //如果在ls中，需要校验依赖是否都已经defined
+                var mod;
+                if (isLsCache && ls && (mod = ls[dep])) {
+                    try {
+                        mod = JSON.parse(mod);
+                    } catch (e) {
+                        mod = null;
+                        ls.removeItem(dep);
+                    }
+                    var childHash = (resMap[dep] || resMap[dep + '.js']).hash;
+
+                    if (mod && childHash && mod.code && mod.v === childHash) {
+                        try {
+                            var s = document.createElement('script');
+                            s.appendChild(document.createTextNode('define("' + dep + '",' + mod.code + ')'));
+                            document.head.appendChild(s);
+                            isNeedLoad = false;
+                            updateNeed();
+                        } catch (e) {
+                            ls.removeItem(dep);
+                        }
+
+                    }
+                }
+
+                isNeedLoad && loadScript(dep, updateNeed, onerror);
 
                 child = resMap[dep] || resMap[dep + '.js'];
                 if (child && 'deps' in child) {
@@ -216,7 +257,6 @@ var define;
             }
         }
     };
-
     require.loadJs = function(url) {
         createScript(url);
     };
